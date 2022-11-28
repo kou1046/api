@@ -51,6 +51,9 @@ class Keypoints(models.Model):
     r_bigtoe = models.OneToOneField(Point, models.CASCADE)
     r_smalltoe = models.OneToOneField(Point, models.CASCADE)
     r_hell = models.OneToOneField(Point, models.CASCADE)
+    @property
+    def points(self) -> list[Point]:
+        return [getattr(self, name) for name in point_names]
 
 class Group(models.Model):
     class Meta:

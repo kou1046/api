@@ -49,14 +49,22 @@ class FrameSerializer(serializers.ModelSerializer):
             group_name = img_path[img_path.index('G'):img_path.index('G')+2]
             data['group'] = {'name':group_name}
         return data
-    def create(self, validated_data:OrderedDict):
-        people = validated_data.pop('people')
-        validated_data['group'], created = Group.objects.get_or_create(**validated_data['group'])
-        instance = super().create(validated_data)
-        for person in people:
-            box = BoundingBox.objects.create(**person['box'])
-            for name, point in person['keypoints'].items():
-                person['keypoints'][name] = Point.objects.create(**point)
-            keypoints = Keypoints.objects.create(**person['keypoints'])
-            Person.objects.create(box=box, keypoints=keypoints, frame=instance)
-        return instance
+    
+class FrameListSerializer(serializers.ListSerializer):
+    child = FrameSerializer()
+    def create(self, validated_data_list:list[OrderedDict]):
+        people_ins = []
+        frames = []
+        for validated_data in validated_data_list:
+            people = validated_data.pop('people')
+            validated_data['group'], created = Group.objects.get_or_create(**validated_data['group'])
+            instance = CombinedFrame.objects.create(**validated_data)
+            frames.append(instance)
+            for person in people:
+                for name, point in person['keypoints'].items():
+                    person['keypoints'][name] = Point.objects.create(**point)
+                box = BoundingBox.objects.create(**person['box'])
+                keypoints = Keypoints.objects.create(**person['keypoints'])
+                people_ins.append(Person(box=box, keypoints=keypoints, frame=instance))
+        Person.objects.bulk_create(people_ins)
+        return frames
