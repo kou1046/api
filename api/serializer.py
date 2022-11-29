@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from rest_framework import serializers
+from django.db import transaction, models
 from .models import *
 
 class BoxSerializer(serializers.ModelSerializer):
@@ -53,18 +54,37 @@ class FrameSerializer(serializers.ModelSerializer):
 class FrameListSerializer(serializers.ListSerializer):
     child = FrameSerializer()
     def create(self, validated_data_list:list[OrderedDict]):
-        people_ins = []
-        frames = []
-        for validated_data in validated_data_list:
-            people = validated_data.pop('people')
-            validated_data['group'], created = Group.objects.get_or_create(**validated_data['group'])
-            instance = CombinedFrame.objects.create(**validated_data)
-            frames.append(instance)
-            for person in people:
-                for name, point in person['keypoints'].items():
-                    person['keypoints'][name] = Point.objects.create(**point)
-                box = BoundingBox.objects.create(**person['box'])
-                keypoints = Keypoints.objects.create(**person['keypoints'])
-                people_ins.append(Person(box=box, keypoints=keypoints, frame=instance))
-        Person.objects.bulk_create(people_ins)
-        return frames
+        new_people = []
+        new_frames = []
+        new_boxes = []
+        new_keypoints_set = []
+        new_points = []
+        new_groups = []
+        with transaction.atomic():
+            for validated_data in validated_data_list:
+                people = validated_data.pop('people')
+                new_group = Group(**validated_data['group'])
+                validated_data['group'] = new_group
+                new_frame = CombinedFrame(**validated_data)
+                new_groups.append(new_group)
+                new_frames.append(new_frame)
+                for person in people:
+                    for name, point in person['keypoints'].items():
+                        new_point = Point(**point)
+                        person['keypoints'][name] = new_point
+                        new_points.append(new_point)
+                    new_box = BoundingBox(**person['box'])
+                    new_keypoints = Keypoints(**person['keypoints'])
+                    new_person = Person(box=new_box, keypoints=new_keypoints, frame=new_frame)
+                    new_boxes.append(new_box); new_keypoints_set.append(new_keypoints)
+                    new_people.append(new_person)
+
+            Point.objects.bulk_create(new_points)
+            Keypoints.objects.bulk_create(new_keypoints_set)
+            BoundingBox.objects.bulk_create(new_boxes)
+            Group.objects.bulk_create(new_groups, ignore_conflicts=True)
+            CombinedFrame.objects.bulk_create(new_frames)
+            Person.objects.bulk_create(new_people)
+        return new_frames
+    
+    
