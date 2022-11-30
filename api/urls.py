@@ -15,9 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from .view import home
+from .view import FrameListAPIView, GroupListAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home)
+    path('api/frame/', FrameListAPIView.as_view()),
+    path('api/group/', GroupListAPIView.as_view())
 ]
