@@ -19,6 +19,6 @@ from .view import FrameListAPIView, GroupListAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/frame/', FrameListAPIView.as_view()),
+    path('api/frame/<pk>', FrameListAPIView.as_view()),
     path('api/group/', GroupListAPIView.as_view())
 ]

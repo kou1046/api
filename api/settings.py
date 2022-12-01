@@ -26,7 +26,7 @@ SECRET_KEY = SK
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 if DEBUG is True:
     CORS_ALLOW_ALL_ORIGINS = True

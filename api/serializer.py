@@ -1,12 +1,14 @@
 from collections import OrderedDict
 from rest_framework import serializers
 from django.db import transaction, models
+import base64
 from .models import *
+
 
 class BoxSerializer(serializers.ModelSerializer):
     class Meta:
         model = BoundingBox
-        fields = ['xmin', 'xmax', 'ymin', 'ymax']
+        fields = ['xmin', 'xmax', 'ymin', 'ymax', 'id']
         
 class Pointserializer(serializers.ModelSerializer):
     class Meta:
@@ -36,18 +38,24 @@ class KeypointsSerializer(serializers.ModelSerializer):
 class PersonSerializer(serializers.ModelSerializer):
     box = BoxSerializer()
     keypoints = KeypointsSerializer()
-    frame_num = serializers.IntegerField(source='frame.frame')
-    frame_img_path = serializers.CharField(source='frame.img_path')
     class Meta:
         model = Person
-        fields = ['box', 'keypoints', 'frame_num', 'frame_img_path']
-        read_only_fields = ['frame_num', 'frame_img_path']
-
+        fields = ['box', 'keypoints']
+        
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ['name']
 class FrameSerializer(serializers.ModelSerializer):
     people = PersonSerializer(many=True)
+    img = serializers.SerializerMethodField()
+    group = GroupSerializer()
     class Meta:
         model = CombinedFrame
-        fields = ['group', 'img_path', 'people', 'frame']
+        fields = ['group', 'img_path', 'people', 'frame', 'img']
+        extra_kwargs = {
+            'img_path':{'write_only':True}
+        }
         
     def to_internal_value(self, data):
         data = super().to_internal_value(data)
@@ -56,6 +64,10 @@ class FrameSerializer(serializers.ModelSerializer):
             group_name = img_path[img_path.index('G'):img_path.index('G')+2]
             data['group'] = {'name':group_name}
         return data
+    def get_img(self, instance:CombinedFrame):
+        with open(instance.img_path, 'rb') as f:
+            img = base64.b64encode(f.read())
+        return img.decode('utf-8')
     
 class FrameListSerializer(serializers.ListSerializer):
     child = FrameSerializer()
@@ -92,8 +104,5 @@ class FrameListSerializer(serializers.ListSerializer):
             Person.objects.bulk_create(new_people)
         return new_frames
     
-class GroupSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Group
-        fields = ['name']
+
     

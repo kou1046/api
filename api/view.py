@@ -7,11 +7,11 @@ from .models import *
 from .serializer import *
 
 class FrameListAPIView(views.APIView):
-    def get(self, request, *args, **kwargs):
-        frames = CombinedFrame.objects.filter(frame=3, group__name='G3')
+    def get(self, request, pk,  *args, **kwargs):
+        print(pk)
+        frames = CombinedFrame.objects.filter(frame=pk)
         serializer = FrameListSerializer(frames)
         res = serializer.data
-        print(args)
         return Response(res)
     
 class GroupListAPIView(generics.ListAPIView):
