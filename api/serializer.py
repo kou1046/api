@@ -18,14 +18,10 @@ class Pointserializer(serializers.ModelSerializer):
 class KeypointsSerializer(serializers.ModelSerializer):
     points = Pointserializer(many=True, write_only=True)
     for p in point_names:
-        exec(f'{p} = Pointserializer()')
+        exec(f'{p} = Pointserializer(read_only=True)')
     class Meta:
         model = Keypoints
         fields = point_names + ['points']
-        read_only_fields = point_names
-        extra_kwargs = {
-            'id':{'write_only':True}
-        }
         
     def to_internal_value(self, data):
         data = super().to_internal_value(data)
@@ -38,9 +34,13 @@ class KeypointsSerializer(serializers.ModelSerializer):
 class PersonSerializer(serializers.ModelSerializer):
     box = BoxSerializer()
     keypoints = KeypointsSerializer()
+    img = serializers.SerializerMethodField()
     class Meta:
         model = Person
-        fields = ['box', 'keypoints']
+        fields = ['box', 'keypoints', 'img']
+    def get_img(self, instance:Person):
+        ret, dst_data = cv2.imencode('.jpg', instance.img)
+        return base64.b64encode(dst_data)
         
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
@@ -49,7 +49,7 @@ class GroupSerializer(serializers.ModelSerializer):
 class FrameSerializer(serializers.ModelSerializer):
     people = PersonSerializer(many=True)
     img = serializers.SerializerMethodField()
-    group = GroupSerializer()
+    group = GroupSerializer(read_only=True)
     class Meta:
         model = CombinedFrame
         fields = ['group', 'img_path', 'people', 'frame', 'img']
@@ -103,6 +103,19 @@ class FrameListSerializer(serializers.ListSerializer):
             CombinedFrame.objects.bulk_create(new_frames)
             Person.objects.bulk_create(new_people)
         return new_frames
+    
+class WDTeacherSerializer(serializers.ModelSerializer):
+    person = PersonSerializer()
+    class Meta:
+        model = WDTeahcer
+        fields = ['person', 'label']
+        
+class PTeacherSerializer(serializers.ModelSerializer):
+    person = PersonSerializer()
+    class Meta:
+        model = PTeacher
+        fields = ['person', 'label']
+        
     
 
     
