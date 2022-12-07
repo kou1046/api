@@ -17,9 +17,15 @@ class FrameListAPIView(views.APIView):
 class WDTeacherListApiView(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         ret = super().get(request, *args, **kwargs)
-        print(request)
         return ret 
-    queryset = WDTeahcer.objects.all()
+    queryset = WDTeacher.objects.all()
+    serializer_class = WDTeacherSerializer
+
+class WTHTeacherListApiView(generics.ListAPIView):
+    def get(self, request, *args, **kwargs):
+        ret = super().get(request, *args, **kwargs)
+        return ret 
+    queryset = WTHTeacher.objects.all()
     serializer_class = WDTeacherSerializer
 
 class GroupListAPIView(generics.ListAPIView):

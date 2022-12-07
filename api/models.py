@@ -2,6 +2,7 @@ from django.db import models
 import uuid
 import numpy as np 
 import cv2
+import datetime
 
 class UUIDModel(models.Model):
     class Meta:
@@ -24,7 +25,6 @@ class Point(UUIDModel):
     x = models.FloatField()
     y = models.FloatField()
     p = models.FloatField()
-    
 
 point_names = ['nose', 'neck', 'r_shoulder', 'r_elbow', 'r_wrist', 'l_shoulder', 'l_elbow', 'l_wrist', 'midhip', 'r_hip', 'r_knee',
                 'r_ankle', 'l_hip', 'l_knee', 'l_ankle', 'r_eye', 'l_eye', 'r_ear', 'l_ear', 'l_bigtoe','l_smalltoe', 'l_heel', 'r_bigtoe',
@@ -78,6 +78,7 @@ class CombinedFrame(UUIDModel):
         ]
     frame = models.IntegerField()
     img_path = models.CharField(max_length=100)
+    screenshot_path = models.CharField(max_length=100, null=True)
     group = models.ForeignKey(Group, models.CASCADE, related_name='frames')
     @property
     def img(self) -> np.ndarray:
@@ -102,19 +103,59 @@ class Person(UUIDModel):
                         (self.box.xmin if self.box.xmin >= 0 else 0):(self.box.xmax if self.box.xmax <= screen_width else screen_width)]
         return img
     
+class Click(UUIDModel):
+    class Meta:
+        db_table = 'click'
+    time = models.TimeField()
+    frame = models.OneToOneField(CombinedFrame, models.CASCADE, null=True)
+    x = models.IntegerField()
+    y = models.IntegerField()
+    
+class Release(UUIDModel):
+    class Meta:
+        db_table = 'release'
+    time = models.TimeField()
+    frame = models.OneToOneField(CombinedFrame, models.CASCADE, null=True)
+    x = models.IntegerField()
+    y = models.IntegerField()
+    
+class Drag(UUIDModel):
+    class Meta:
+        db_table = 'drag'
+        constraints = [
+            models.UniqueConstraint(
+                fields = ['click', 'group', 'release'],
+                name = 'unique_drag'
+            )
+        ]
+    click = models.OneToOneField(Click, on_delete=models.CASCADE)
+    release = models.OneToOneField(Release, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='drags')
+    person = models.OneToOneField(Person, models.CASCADE, null=True)
+    @property
+    def distance(self) -> float:
+        return np.linalg.norm(np.array([self.click.x-self.release.x, self.click.y-self.release.y]))
+    @property
+    def time(self) -> float:
+        d = datetime.datetime.now().date()
+        td = datetime.datetime.combine(d, self.release.time) - datetime.datetime.combine(d, self.click.time)
+        return td.total_seconds()
+    
 class Teacher(models.Model):
     class Meta:
         abstract = True
-        
-    
     person = models.OneToOneField(Person, models.CASCADE, unique=True)
     label = models.IntegerField(default=0)
     
-class WDTeahcer(Teacher):
+class WDTeacher(Teacher): #Watching Display Teacher
     class Meta:
         db_table = 'watching_display_teacher'
     
-class PTeacher(Teacher):
+class PTeacher(Teacher): #Programming Teacher
     class Meta:
         db_table = 'programming_teacher'
+        
+class WTHTeacher(Teacher): #What They Have Teacher
+    class Meta:
+        db_table = 'what_they_have_teacher'
     

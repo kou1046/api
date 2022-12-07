@@ -104,10 +104,27 @@ class FrameListSerializer(serializers.ListSerializer):
             Person.objects.bulk_create(new_people)
         return new_frames
     
+class ClickSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Click 
+        fields = '__all__'
+        
+class ReleaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Release
+        fields = '__all__'
+        
+class DragSerializer(serializers.ModelSerializer):
+    click = ClickSerializer()
+    release = ReleaseSerializer()
+    class Meta:
+        model = Drag
+        fields = '__all__'
+    
 class WDTeacherSerializer(serializers.ModelSerializer):
     person = PersonSerializer()
     class Meta:
-        model = WDTeahcer
+        model = WDTeacher
         fields = ['person', 'label']
         
 class PTeacherSerializer(serializers.ModelSerializer):
@@ -115,7 +132,3 @@ class PTeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = PTeacher
         fields = ['person', 'label']
-        
-    
-
-    

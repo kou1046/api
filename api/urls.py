@@ -15,11 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from .view import FrameListAPIView, GroupListAPIView, WDTeacherListApiView
+from .view import FrameListAPIView, WDTeacherListApiView, WTHTeacherListApiView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/frame/<pk>', FrameListAPIView.as_view()),
     path('api/teacher/wd', WDTeacherListApiView.as_view()),
-    path('api/group/', GroupListAPIView.as_view())
+    path('api/teacher/wth', WTHTeacherListApiView().as_view()),
 ]
