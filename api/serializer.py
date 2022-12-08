@@ -106,19 +106,19 @@ class FrameListSerializer(serializers.ListSerializer):
     
 class ClickSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Click 
+        model = MouseClick 
         fields = '__all__'
         
 class ReleaseSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Release
+        model = MouseRelease
         fields = '__all__'
         
 class DragSerializer(serializers.ModelSerializer):
     click = ClickSerializer()
     release = ReleaseSerializer()
     class Meta:
-        model = Drag
+        model = MouseDrag
         fields = '__all__'
     
 class WDTeacherSerializer(serializers.ModelSerializer):

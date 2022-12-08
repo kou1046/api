@@ -66,7 +66,7 @@ class Group(models.Model):
     class Meta:
         db_table = 'group'
     name = models.CharField(primary_key=True, max_length=50)
-
+    
 class CombinedFrame(UUIDModel):
     class Meta:
         db_table = 'frame'
@@ -78,12 +78,51 @@ class CombinedFrame(UUIDModel):
         ]
     frame = models.IntegerField()
     img_path = models.CharField(max_length=100)
-    screenshot_path = models.CharField(max_length=100, null=True)
     group = models.ForeignKey(Group, models.CASCADE, related_name='frames')
     @property
     def img(self) -> np.ndarray:
         return cv2.imread(self.img_path)
 
+class MousePos(UUIDModel):
+    class Meta:
+        db_table = 'mouse_position'
+        constraints = [
+            models.UniqueConstraint(
+                fields = ['group', 'time'],
+                name = 'unique_mouse_position'
+            )
+        ]
+    group = models.ForeignKey(Group, models.CASCADE, related_query_name='mouse_postions')
+    time = models.TimeField()
+    x = models.IntegerField()
+    y = models.IntegerField()
+
+class MouseClick(UUIDModel):
+    class Meta:
+        db_table = 'click'
+    time = models.TimeField()
+    x = models.IntegerField()
+    y = models.IntegerField()
+    frame = models.OneToOneField(CombinedFrame, models.CASCADE, null=True)
+    
+class MouseRelease(UUIDModel):
+    class Meta:
+        db_table = 'release'
+    time = models.TimeField()
+    x = models.IntegerField()
+    y = models.IntegerField()
+    frame = models.OneToOneField(CombinedFrame, models.CASCADE, null=True)
+
+class Device(UUIDModel):
+    class Meta:
+        db_table = 'device'
+    screenshot_path = models.CharField(max_length=100)
+    frame = models.OneToOneField(CombinedFrame, models.CASCADE)
+    group = models.ForeignKey(Group, models.CASCADE)
+    mouse_pos = models.ForeignKey(MousePos, models.PROTECT)
+    mouse_click = models.OneToOneField(MouseClick, models.PROTECT, null=True)
+    mouse_release = models.OneToOneField(MouseRelease, models.PROTECT, null=True)
+    
 class PersonManager(models.Manager):
     def __getitem__(self, index:int):
         return self.all()[index]
@@ -103,23 +142,7 @@ class Person(UUIDModel):
                         (self.box.xmin if self.box.xmin >= 0 else 0):(self.box.xmax if self.box.xmax <= screen_width else screen_width)]
         return img
     
-class Click(UUIDModel):
-    class Meta:
-        db_table = 'click'
-    time = models.TimeField()
-    frame = models.OneToOneField(CombinedFrame, models.CASCADE, null=True)
-    x = models.IntegerField()
-    y = models.IntegerField()
-    
-class Release(UUIDModel):
-    class Meta:
-        db_table = 'release'
-    time = models.TimeField()
-    frame = models.OneToOneField(CombinedFrame, models.CASCADE, null=True)
-    x = models.IntegerField()
-    y = models.IntegerField()
-    
-class Drag(UUIDModel):
+class MouseDrag(UUIDModel):
     class Meta:
         db_table = 'drag'
         constraints = [
@@ -128,8 +151,8 @@ class Drag(UUIDModel):
                 name = 'unique_drag'
             )
         ]
-    click = models.OneToOneField(Click, on_delete=models.CASCADE)
-    release = models.OneToOneField(Release, on_delete=models.CASCADE)
+    click = models.OneToOneField(MouseClick, on_delete=models.CASCADE)
+    release = models.OneToOneField(MouseRelease, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='drags')
     person = models.OneToOneField(Person, models.CASCADE, null=True)
     @property
@@ -140,7 +163,7 @@ class Drag(UUIDModel):
         d = datetime.datetime.now().date()
         td = datetime.datetime.combine(d, self.release.time) - datetime.datetime.combine(d, self.click.time)
         return td.total_seconds()
-    
+
 class Teacher(models.Model):
     class Meta:
         abstract = True
