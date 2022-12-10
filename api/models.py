@@ -118,10 +118,19 @@ class Device(UUIDModel):
         db_table = 'device'
     screenshot_path = models.CharField(max_length=100)
     frame = models.OneToOneField(CombinedFrame, models.CASCADE)
-    group = models.ForeignKey(Group, models.CASCADE)
+    group = models.ForeignKey(Group, models.CASCADE, 'devices')
     mouse_pos = models.ForeignKey(MousePos, models.PROTECT)
     mouse_click = models.OneToOneField(MouseClick, models.PROTECT, null=True)
     mouse_release = models.OneToOneField(MouseRelease, models.PROTECT, null=True)
+    @property
+    def screenshot(self) -> np.ndarray:
+        return cv2.imread(self.screenshot_path)
+    @property
+    def drawn_screenshot(self) -> np.ndarray:
+        ss = self.screenshot
+        color = (0, 0, 0) if self.mouse_click is None and self.mouse_release is None else (0, 0, 255)
+        cv2.circle(ss, (self.mouse_pos.x, self.mouse_pos.y), 5, color, 10)
+        return ss
     
 class PersonManager(models.Manager):
     def __getitem__(self, index:int):
