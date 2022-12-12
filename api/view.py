@@ -1,8 +1,7 @@
 import json     
-from rest_framework import status, views
-from rest_framework import generics
+from rest_framework import status, views, viewsets
 from rest_framework.response import Response
-from rest_framework.parsers import JSONParser
+from rest_framework.decorators import action
 import glob 
 from .models import *
 from .serializer import *
@@ -14,20 +13,34 @@ class FrameListAPIView(views.APIView):
         res = serializer.data
         return Response(res)
     
-class WDTeacherListApiView(generics.ListAPIView):
-    def get(self, request, *args, **kwargs):
-        ret = super().get(request, *args, **kwargs)
-        return ret 
+class PersonAPIViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Person.objects.all()
+    serializer_class = PersonSerializer
+    
+class WDTeacherViewSet(viewsets.ModelViewSet):
     queryset = WDTeacher.objects.all()
     serializer_class = WDTeacherSerializer
+    @action(detail=False, methods=['get'])
+    def add(self, request):
+        people = Person.objects.exclude(id__in=WDTeacher.objects.values_list('person__id', flat=True),
+                                        frame__frame__gte=30000, 
+                                        frame__frame__lte=150000)\
+                               .order_by('?')[:50]
+    
+        return Response(PersonSerializer(people, many=True).data)
 
-class WTHTeacherListApiView(generics.ListAPIView):
-    def get(self, request, *args, **kwargs):
-        ret = super().get(request, *args, **kwargs)
-        return ret 
+class WTHTeacherViewSet(viewsets.ModelViewSet):
     queryset = WTHTeacher.objects.all()
-    serializer_class = WDTeacherSerializer
-
-class GroupListAPIView(generics.ListAPIView):
+    serializer_class = WTHTeacherSerializer
+    @action(detail=False, methods=['get'])
+    def add(self, request):
+        people = Person.objects.exclude(id__in=WTHTeacher.objects.values_list('person__id', flat=True),
+                                        frame__frame__gte=30000, 
+                                        frame__frame__lte=150000)\
+                               .order_by('?')[:50]
+    
+        return Response(PersonSerializer(people, many=True).data)
+    
+class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer

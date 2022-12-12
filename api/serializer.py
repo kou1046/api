@@ -37,9 +37,9 @@ class PersonSerializer(serializers.ModelSerializer):
     img = serializers.SerializerMethodField()
     class Meta:
         model = Person
-        fields = ['box', 'keypoints', 'img']
+        fields = ['id', 'box', 'keypoints', 'img']
     def get_img(self, instance:Person):
-        ret, dst_data = cv2.imencode('.jpg', instance.img)
+        ret, dst_data = cv2.imencode('.jpg', instance.get_visualized_screen_img(color=(0, 0, 255)))
         return base64.b64encode(dst_data)
         
 class GroupSerializer(serializers.ModelSerializer):
@@ -56,7 +56,6 @@ class FrameSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'img_path':{'write_only':True}
         }
-        
     def to_internal_value(self, data):
         data = super().to_internal_value(data)
         if 'group' not in data:
@@ -122,13 +121,15 @@ class DragSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
 class WDTeacherSerializer(serializers.ModelSerializer):
-    person = PersonSerializer()
     class Meta:
         model = WDTeacher
         fields = ['person', 'label']
-        
+
+class WTHTeacherSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WTHTeacher
+        fields = ['person', 'label']
 class PTeacherSerializer(serializers.ModelSerializer):
-    person = PersonSerializer()
     class Meta:
         model = PTeacher
         fields = ['person', 'label']
