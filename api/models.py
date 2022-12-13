@@ -3,6 +3,8 @@ import uuid
 import numpy as np 
 import cv2
 import datetime
+import base64
+
 
 class UUIDModel(models.Model):
     class Meta:
@@ -18,6 +20,12 @@ class BoundingBox(models.Model):
     ymin = models.IntegerField()
     xmax = models.IntegerField()
     ymax = models.IntegerField()
+    @property
+    def center_x(self) -> float:
+        return float(self.xmax - self.xmin)/2. + float(self.xmin)
+    @property
+    def center_y(self) -> float:
+        return float(self.ymax - self.ymin)/2. + float(self.ymin)
 
 class Point(UUIDModel):
     class Meta:
@@ -159,17 +167,32 @@ class Person(UUIDModel):
         img = frame_img[(self.box.ymin if self.box.ymin >= 0 else 0):(self.box.ymax if self.box.ymax <= screen_height else screen_height),
                         (self.box.xmin if self.box.xmin >= 0 else 0):(self.box.xmax if self.box.xmax <= screen_width else screen_width)]
         return img
-    def get_visualized_screen_img(self, draw_keypoints:bool=False, color:tuple[int, int, int]=(0, 0, 0), point_radius:int=5, thickness:int=3) -> np.ndarray:
+    @property
+    def img_base64(self):
+        ret, dst_data = cv2.imencode('.jpg', self.img)
+        return base64.b64encode(dst_data)
+    def get_visualized_screen_img(self, draw_keypoints:bool=False,
+                                  color:tuple[int, int, int]=(0, 0, 0), point_radius:int=5, thickness:int=3,
+                                  isbase64=False
+                                  ) -> np.ndarray:
         img_copy = self.frame.img
         cv2.rectangle(img_copy, (self.box.xmin, self.box.ymin), (self.box.xmax, self.box.ymax), color, thickness)
         if draw_keypoints:
             for point in self.keypoints.points:
                 cv2.circle(img_copy, (int(point.x), int(point.y)), point_radius, color, thickness)
+        if isbase64:
+            ret, dst_data = cv2.imencode('.jpg', img_copy)
+            return base64.b64encode(dst_data)
         return img_copy
-    def get_visualized_img(self, color:tuple[int, int, int]=(0, 0, 0), point_radius:int=5, thickness:int=3) -> np.ndarray:
+    def get_visualized_img(self, color:tuple[int, int, int]=(0, 0, 0), point_radius:int=5, thickness:int=3,
+                           isbase64=False
+                           ) -> np.ndarray:
         img_copy = self.img.copy()
         for point in self.keypoints.points:
             cv2.circle(img_copy, (int(point.x)-self.box.xmin, int(point.y)-self.box.ymin), point_radius, color, thickness)
+        if isbase64:
+            ret, dst_data = cv2.imencode('.jpg', img_copy)
+            return base64.b64encode(dst_data)
         return img_copy
     
 class MouseDrag(UUIDModel):

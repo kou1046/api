@@ -39,8 +39,16 @@ class PersonSerializer(serializers.ModelSerializer):
         model = Person
         fields = ['id', 'box', 'keypoints', 'img']
     def get_img(self, instance:Person):
-        ret, dst_data = cv2.imencode('.jpg', instance.get_visualized_screen_img(color=(0, 0, 255)))
-        return base64.b64encode(dst_data)
+        return instance.get_visualized_screen_img(isbase64=True, color=(0, 0, 255))
+    
+class PersonSerializer2(serializers.ModelSerializer):
+    box = BoxSerializer()
+    frameNum = serializers.SerializerMethodField()
+    class Meta:
+        model = Person
+        fields = ['id', 'box', 'frameNum']
+    def get_frameNum(self, instance:Person):
+        return instance.frame.frame
         
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
