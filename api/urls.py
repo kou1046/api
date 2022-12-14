@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from .view import PersonAPIViewSet, \
+                  PTeacherViewSet, \
                   WDTeacherViewSet, \
                   WTHTeacherViewSet, \
                   GroupViewSet, \
@@ -26,6 +27,7 @@ from .view import PersonAPIViewSet, \
 router = routers.DefaultRouter()
 router.register('people', PersonAPIViewSet)
 router.register('wd', WDTeacherViewSet)
+router.register('programming', PTeacherViewSet)
 router.register('wth', WTHTeacherViewSet)
 router.register('group', GroupViewSet)
 

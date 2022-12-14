@@ -34,21 +34,18 @@ class KeypointsSerializer(serializers.ModelSerializer):
 class PersonSerializer(serializers.ModelSerializer):
     box = BoxSerializer()
     keypoints = KeypointsSerializer()
-    img = serializers.SerializerMethodField()
     class Meta:
         model = Person
-        fields = ['id', 'box', 'keypoints', 'img']
-    def get_img(self, instance:Person):
-        return instance.get_visualized_screen_img(isbase64=True, color=(0, 0, 255))
-    
+        fields = ['id', 'box', 'keypoints']
+        
 class PersonSerializer2(serializers.ModelSerializer):
     box = BoxSerializer()
-    frameNum = serializers.SerializerMethodField()
+    frameNum = serializers.IntegerField(source='frame.frame')
+    group = serializers.CharField(source='frame.group.name')
+    
     class Meta:
         model = Person
-        fields = ['id', 'box', 'frameNum']
-    def get_frameNum(self, instance:Person):
-        return instance.frame.frame
+        fields = ['id', 'box', 'frameNum', 'group']
         
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
@@ -127,17 +124,36 @@ class DragSerializer(serializers.ModelSerializer):
     class Meta:
         model = MouseDrag
         fields = '__all__'
-    
+        
 class WDTeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = WDTeacher
         fields = ['person', 'label']
-
+    def to_representation(self, instance):
+        data = {
+            "label": instance.label, 
+            "person": PersonSerializer2(instance.person).data
+        }
+        return data
+    
 class WTHTeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = WTHTeacher
         fields = ['person', 'label']
+    def to_representation(self, instance):
+        data = {
+            "label": instance.label, 
+            "person": PersonSerializer2(instance.person).data
+        }
+        return data
+        
 class PTeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = PTeacher
         fields = ['person', 'label']
+    def to_representation(self, instance):
+        data = {
+            "label": instance.label, 
+            "person": PersonSerializer2(instance.person).data
+        }
+        return data
