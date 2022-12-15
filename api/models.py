@@ -90,6 +90,10 @@ class CombinedFrame(UUIDModel):
     @property
     def img(self) -> np.ndarray:
         return cv2.imread(self.img_path)
+    @property
+    def img_base64(self) -> str: 
+        ret, dst_data = cv2.imencode('.jpg', self.img)
+        return base64.b64encode(dst_data)
     def get_visualized_image(self, draw_keypoints:bool=False, color:tuple[int, int, int]=(0, 0, 0), point_radius:int=5, thickness:int=3) -> np.ndarray:
         img = self.img.copy()
         for person in self.people:
@@ -143,11 +147,20 @@ class Device(UUIDModel):
     def screenshot(self) -> np.ndarray:
         return cv2.imread(self.screenshot_path)
     @property
+    def screenshot_base64(self):
+        ret, dst_data = cv2.imencode('.jpg', self.screenshot)
+        return base64.b64encode(dst_data)
+    @property
     def drawn_screenshot(self) -> np.ndarray:
         ss = self.screenshot
         color = (0, 0, 0) if self.mouse_click is None and self.mouse_release is None else (0, 0, 255)
         cv2.circle(ss, (self.mouse_pos.x, self.mouse_pos.y), 5, color, 10)
         return ss
+    @property
+    def drawn_screenshot_base64(self) -> np.ndarray:
+        ret, dst_data = cv2.imencode('.jpg', self.drawn_screenshot)
+        return base64.b64encode(dst_data)
+    
     
 class PersonManager(models.Manager):
     def __getitem__(self, index:int):

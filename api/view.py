@@ -15,13 +15,20 @@ from packages.mycommon import myplot
 
 matplotlib.use('AGG')
 for k, v in myplot.get_my_rcparams().items(): plt.rc(k, **v)
-
-class FrameListAPIView(views.APIView):
-    def get(self, request, pk,  *args, **kwargs):
-        frames = CombinedFrame.objects.filter(frame=pk)
-        serializer = FrameListSerializer(frames)
-        res = serializer.data
-        return Response(res)
+    
+class ReadOnlyFrameAPIViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = CombinedFrame.objects.all()
+    serializer_class = ReadOnlyFrameSerializer
+    def get_queryset(self):
+        query_names = ["frame", "group"]
+        filter_args = {}
+        for name in self.request.query_params:
+            if name in query_names:
+                filter_args[name + "__name" if name == "group" else name] = self.request.query_params[name]
+        return CombinedFrame.objects.filter(**filter_args)
+    @action(detail=True, methods=["get"])
+    def img(self, request, pk):
+        return Response(CombinedFrame.objects.get(pk=pk).img_base64)
     
 class PersonAPIViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Person.objects.all()
@@ -47,8 +54,8 @@ class WDTeacherViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def add(self, request):
         people = Person.objects.exclude(id__in=WDTeacher.objects.values_list('person__id', flat=True),
-                                        frame__frame__gte=30000, 
-                                        frame__frame__lte=150000)\
+                                        frame__frame__lt=30000, 
+                                        frame__frame__gt=150000)\
                                .order_by('?')[:50]
         return Response(PersonSerializer2(people, many=True).data)
     
@@ -64,8 +71,8 @@ class PTeacherViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def add(self, request):
         people = Person.objects.exclude(id__in=PTeacher.objects.values_list('person__id', flat=True),
-                                        frame__frame__gte=30000, 
-                                        frame__frame__lte=150000)\
+                                        frame__frame__lt=30000, 
+                                        frame__frame__gt=150000)\
                                .order_by('?')[:50]
         return Response(PersonSerializer2(people, many=True).data)
 
@@ -82,10 +89,32 @@ class WTHTeacherViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def add(self, request):
         people = Person.objects.exclude(id__in=WTHTeacher.objects.values_list('person__id', flat=True),
-                                        frame__frame__gte=30000, 
-                                        frame__frame__lte=150000)\
+                                        frame__frame__lt=30000, 
+                                        frame__frame__gt=150000)\
                                .order_by('?')[:50]
         return Response(PersonSerializer2(people, many=True).data)
+    
+class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Device.objects.all()
+    serializer_class = DeviceSerializer
+    def get_queryset(self):
+        query_names = ["frame", 'group']
+        filter_args = {}
+        for name in self.request.query_params:
+            if name in query_names:
+                if name == "frame":
+                    key = name + "__frame"
+                if name == "group":
+                    key = name + "__name"
+                filter_args[key] = self.request.query_params[name]
+        return Device.objects.filter(**filter_args)
+    @action(detail=True, methods=["get"])
+    def screenshot(self, request, pk):
+        return Response(Device.objects.get(pk=pk).drawn_screenshot_base64)
+    
+class MouseDragViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = MouseDrag.objects.all()
+    serializer_class = MouseDragSerializer
     
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Group.objects.all()

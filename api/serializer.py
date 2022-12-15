@@ -108,6 +108,12 @@ class FrameListSerializer(serializers.ListSerializer):
             Person.objects.bulk_create(new_people)
         return new_frames
     
+class ReadOnlyFrameSerializer(serializers.ModelSerializer):
+    device = serializers.CharField(source="device.id")
+    class Meta:
+        model = CombinedFrame
+        fields = ["group", "frame", "id", "device"]
+    
 class ClickSerializer(serializers.ModelSerializer):
     class Meta:
         model = MouseClick 
@@ -157,3 +163,31 @@ class PTeacherSerializer(serializers.ModelSerializer):
             "person": PersonSerializer2(instance.person).data
         }
         return data
+    
+class MousePosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MousePos
+        fields = ['time', 'x', 'y']
+
+class MouseReleaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MouseRelease
+        fields = ['time', 'x', 'y', 'frame']
+        
+class MouseClickSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MouseClick
+        fields = ['time', 'x', 'y', 'frame']
+        
+class MouseDragSerializer(serializers.ModelSerializer):
+    click = MouseClickSerializer()
+    release = MouseReleaseSerializer()
+    group = GroupSerializer()
+    class Meta:
+        model = MouseDrag
+        fields = ['id', 'click', 'release', 'group', 'person']
+        
+class DeviceSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = Device
+        fields = ["id"]

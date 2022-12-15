@@ -20,19 +20,22 @@ from .view import PersonAPIViewSet, \
                   PTeacherViewSet, \
                   WDTeacherViewSet, \
                   WTHTeacherViewSet, \
+                  DeviceViewSet, \
                   GroupViewSet, \
-                  FrameListAPIView
+                  MouseDragViewSet, \
+                  ReadOnlyFrameAPIViewSet
                   
-
 router = routers.DefaultRouter()
+router.register('frames', ReadOnlyFrameAPIViewSet)
 router.register('people', PersonAPIViewSet)
 router.register('wd', WDTeacherViewSet)
 router.register('programming', PTeacherViewSet)
 router.register('wth', WTHTeacherViewSet)
-router.register('group', GroupViewSet)
+router.register('devices', DeviceViewSet)
+router.register('drags', MouseDragViewSet)
+router.register('groups', GroupViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),\
     path('api/', include(router.urls)), 
-    path('api/frame/<pk>', FrameListAPIView.as_view()),
 ]
