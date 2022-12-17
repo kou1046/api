@@ -112,7 +112,7 @@ class ReadOnlyFrameSerializer(serializers.ModelSerializer):
     device = serializers.CharField(source="device.id")
     class Meta:
         model = CombinedFrame
-        fields = ["group", "frame", "id", "device"]
+        fields = ["group", "frame", "id", "device", "people"]
     
 class ClickSerializer(serializers.ModelSerializer):
     class Meta:
