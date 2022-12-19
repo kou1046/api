@@ -235,29 +235,17 @@ class InferenceModel(UUIDModel):
         db_table = "inference_model"    
     name = models.CharField(max_length=50, unique=True)
     label_description = models.CharField(max_length=100)
-    model_path = models.CharField(max_length=50)
-
-class Teacher2(models.Model):
-    person = models.OneToOneField(Person, models.CASCADE, unique=True)
-    label = models.IntegerField(default=0)
-    model = models.ForeignKey(InferenceModel, on_delete=models.CASCADE, related_name="teachers")
+    model_path = models.CharField(max_length=50, null=True)
 
 class Teacher(models.Model):
     class Meta:
-        abstract = True
-    person = models.OneToOneField(Person, models.CASCADE, unique=True)
+        db_table = "teacher"
+        constraints = [
+                models.UniqueConstraint(
+                    fields = ['person', "model"],
+                    name = 'unique_teacher'
+                )
+            ]
+    person = models.ForeignKey(Person, models.CASCADE, related_name="teachers")
     label = models.IntegerField(default=0)
-    model = models.ForeignKey(InferenceModel, on_delete=models.CASCADE, null=True)
-    
-class WDTeacher(Teacher): #Watching Display Teacher
-    class Meta:
-        db_table = 'watching_display_teacher'
-    
-class PTeacher(Teacher): #Programming Teacher
-    class Meta:
-        db_table = 'programming_teacher'
-        
-class WTHTeacher(Teacher): #What They Have Teacher
-    class Meta:
-        db_table = 'what_they_have_teacher'
-    
+    model = models.ForeignKey(InferenceModel, on_delete=models.CASCADE, related_name="teachers")

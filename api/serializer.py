@@ -131,39 +131,6 @@ class DragSerializer(serializers.ModelSerializer):
         model = MouseDrag
         fields = '__all__'
         
-class WDTeacherSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WDTeacher
-        fields = ['person', 'label']
-    def to_representation(self, instance):
-        data = {
-            "label": instance.label, 
-            "person": PersonSerializer2(instance.person).data
-        }
-        return data
-    
-class WTHTeacherSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WTHTeacher
-        fields = ['person', 'label']
-    def to_representation(self, instance):
-        data = {
-            "label": instance.label, 
-            "person": PersonSerializer2(instance.person).data
-        }
-        return data
-        
-class PTeacherSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PTeacher
-        fields = ['person', 'label']
-    def to_representation(self, instance):
-        data = {
-            "label": instance.label, 
-            "person": PersonSerializer2(instance.person).data
-        }
-        return data
-    
 class MousePosSerializer(serializers.ModelSerializer):
     class Meta:
         model = MousePos
@@ -193,11 +160,18 @@ class DeviceSerializer(serializers.ModelSerializer):
         fields = ["id"]
 
 class InferenceModelSerializer(serializers.ModelSerializer):
+    labelDescription = serializers.CharField(source="label_description")
     class Meta:
         model = InferenceModel
-        fields = "__all__"
+        fields = ["id", "name", "labelDescription"]
 
 class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Teacher2
-        fields = "__all__"
+        model = Teacher
+        fields = ['person', 'label', 'model']
+    def to_representation(self, instance):
+        data = {
+            "label": instance.label, 
+            "person": PersonSerializer2(instance.person).data
+        }
+        return data

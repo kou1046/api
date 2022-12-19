@@ -16,26 +16,30 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
+from rest_framework_nested import routers
 from .view import PersonAPIViewSet, \
-                  PTeacherViewSet, \
-                  WDTeacherViewSet, \
-                  WTHTeacherViewSet, \
                   DeviceViewSet, \
                   GroupViewSet, \
                   MouseDragViewSet, \
-                  ReadOnlyFrameAPIViewSet
+                  ReadOnlyFrameAPIViewSet, \
+                  InferenceModelViewSet, \
+                  TeacherViewSet
                   
 router = routers.DefaultRouter()
 router.register('frames', ReadOnlyFrameAPIViewSet)
 router.register('people', PersonAPIViewSet)
-router.register('wd', WDTeacherViewSet)
-router.register('programming', PTeacherViewSet)
-router.register('wth', WTHTeacherViewSet)
 router.register('devices', DeviceViewSet)
-router.register('drags', MouseDragViewSet)
 router.register('groups', GroupViewSet)
+router.register("models", InferenceModelViewSet)
+
+groups_router = routers.NestedDefaultRouter(router, "groups", lookup="group")
+groups_router.register("drags", MouseDragViewSet)
+models_router = routers.NestedDefaultRouter(router, "models", lookup="model")
+models_router.register("teachers", TeacherViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),\
-    path('api/', include(router.urls)), 
+    path('api/', include(router.urls)),
+    path('api/', include(groups_router.urls)),
+    path("api/", include(models_router.urls))
 ]
