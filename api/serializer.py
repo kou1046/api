@@ -191,3 +191,13 @@ class DeviceSerializer(serializers.ModelSerializer):
     class Meta: 
         model = Device
         fields = ["id"]
+
+class InferenceModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InferenceModel
+        fields = "__all__"
+
+class TeacherSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Teacher2
+        fields = "__all__"

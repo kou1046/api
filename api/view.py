@@ -119,3 +119,17 @@ class MouseDragViewSet(viewsets.ReadOnlyModelViewSet):
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
+
+class InferenceModelViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = InferenceModel.objects.all()
+    serializer_class = InferenceModelSerializer
+    def get_queryset(self):
+        query_names = ["name"]
+        filter_args = {}
+        for param in self.request.query_params:
+            if param in query_names:
+                filter_args[param] = self.request.query_params[param]
+        return self.queryset.filter(**filter_args)
+    @action(detail=False, methods=["get"])
+    def teachers(self, request):
+        return Response(TeacherSerializer(self.queryset.all()[0].teachers).data)

@@ -230,11 +230,24 @@ class MouseDrag(UUIDModel):
         td = datetime.datetime.combine(d, self.release.time) - datetime.datetime.combine(d, self.click.time)
         return td.total_seconds()
 
+class InferenceModel(UUIDModel):
+    class Meta:
+        db_table = "inference_model"    
+    name = models.CharField(max_length=50, unique=True)
+    label_description = models.CharField(max_length=100)
+    model_path = models.CharField(max_length=50)
+
+class Teacher2(models.Model):
+    person = models.OneToOneField(Person, models.CASCADE, unique=True)
+    label = models.IntegerField(default=0)
+    model = models.ForeignKey(InferenceModel, on_delete=models.CASCADE, related_name="teachers")
+
 class Teacher(models.Model):
     class Meta:
         abstract = True
     person = models.OneToOneField(Person, models.CASCADE, unique=True)
     label = models.IntegerField(default=0)
+    model = models.ForeignKey(InferenceModel, on_delete=models.CASCADE, null=True)
     
 class WDTeacher(Teacher): #Watching Display Teacher
     class Meta:
