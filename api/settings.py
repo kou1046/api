@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from pathlib import Path
+
 from .settings_local import SECRET_KEY as SK
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

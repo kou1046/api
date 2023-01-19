@@ -1,7 +1,9 @@
-from collections import OrderedDict
-from rest_framework import serializers
-from django.db import transaction, models
 import base64
+from collections import OrderedDict
+
+from django.db import models, transaction
+from rest_framework import serializers
+
 from .models import *
 
 
