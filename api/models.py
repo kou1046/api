@@ -393,3 +393,13 @@ class Teacher(models.Model):
     model = models.ForeignKey(
         InferenceModel, on_delete=models.CASCADE, related_name="teachers"
     )
+
+
+class Action(models.Model):
+    class Meta:
+        db_table = "action"
+
+    person = models.OneToOneField(Person, models.CASCADE, related_name="action")
+    is_programming = models.BooleanField()
+    is_having_pen = models.BooleanField()
+    is_watching_display = models.BooleanField()
