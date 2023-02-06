@@ -1,3 +1,5 @@
+import json
+import os
 import re
 from itertools import groupby
 
@@ -91,6 +93,32 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
+
+    @action(detail=True, methods=["get"])
+    def actionsync(self, request, pk):
+        group_name = pk
+        with open(
+            os.path.join(
+                "processed_data",
+                "action_synchronization",
+                f"{group_name}_action_sync.json",
+            ),
+            "rb",
+        ) as f:
+            group_syncs = json.load(f)
+
+        for group_sync in group_syncs:
+            id_1, id_2 = group_sync["ids"]
+            imgs = [
+                Person.objects.get(
+                    box__id=id_1, frame__group__name=group_name, frame__frame=3
+                ).img_base64,
+                Person.objects.get(
+                    box__id=id_2, frame__group__name=group_name, frame__frame=3
+                ).img_base64,
+            ]
+            group_sync["imgs"] = imgs
+        return Response(group_syncs)
 
 
 class MouseDragViewSet(viewsets.ReadOnlyModelViewSet):
