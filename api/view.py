@@ -95,7 +95,7 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = GroupSerializer
 
     @action(detail=True, methods=["get"])
-    def actionsync(self, request, pk):
+    def actionsyncs(self, request, pk):
         group_name = pk
         with open(
             os.path.join(
@@ -119,6 +119,26 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
             ]
             group_sync["imgs"] = imgs
         return Response(group_syncs)
+
+    @action(detail=True, methods=["get"])
+    def actionvariations(self, request, pk):
+        group_name = pk
+        with open(
+            os.path.join(
+                "processed_data",
+                "action_variation",
+                f"{group_name}_action_variations.json",
+            )
+        ) as f:
+            variations = json.load(f)
+        return Response(variations)
+
+    @action(detail=True, methods=["get"])
+    def members(self, request, pk):
+        group_name = pk
+        members = Person.objects.filter(frame__frame=3, frame__group__name=group_name)
+        response = [{"id": p.box.id, "img": p.img_base64} for p in members]
+        return Response(response)
 
 
 class MouseDragViewSet(viewsets.ReadOnlyModelViewSet):
